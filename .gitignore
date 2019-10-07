@@ -1,0 +1,10 @@
+### Files and directories to be discard
+
+# Ignore all cached directories
+**/__pycache__/
+
+# Ignore ipynb checkpoints
+**/.ipynb_checkpoints
+
+# Mac stuffs 
+**/.DS_Store
