@@ -1,4 +1,4 @@
-### Files and directories to be discard
+### Files and Directory to discard
 
 # Ignore all cached directories
 **/__pycache__/
@@ -8,3 +8,9 @@
 
 # Mac stuffs 
 **/.DS_Store
+
+# Tmp files
+experiments/**
+
+# Reserved files
+notebooks/rot_helper/config_sensible_paths.json
