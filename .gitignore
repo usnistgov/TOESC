@@ -14,3 +14,4 @@ experiments/**
 
 # Reserved files
 notebooks/rot_helper/config_sensible_paths.json
+notebooks/rot_helper/config_sensible_paths_lambda.json

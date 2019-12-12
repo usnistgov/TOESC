@@ -15,7 +15,8 @@ from io import StringIO
 from matplotlib import pyplot as plt
 from PIL import Image
 
-paths = 'rot_helper/config_sensible_paths.json'
+paths = 'rot_helper/config_sensible_paths.json' #M.
+#paths = 'rot_helper/config_sensible_paths_lambda.json' #L.
 datastore = None
 with open(paths, 'r') as f:
     datastore = json.load(f)
