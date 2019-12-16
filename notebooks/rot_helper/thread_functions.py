@@ -8,6 +8,6 @@ def sky_images_generator(sky_camera_images_files, queue_of_inbound_sky_images):
 
 		queue_of_inbound_sky_images.put(next_image)
 
-		time.sleep(.2) # Simulate the 5 seconds shutter camera window
+		time.sleep(.5) # Simulate the 5 seconds shutter camera window
 
 	return "Done"

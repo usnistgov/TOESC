@@ -127,19 +127,19 @@ def detection_data(sample_image_file):
 
 	obj_detections_dict[sample_image_file] = output_dict
 
-	# Visualization of the results of a detection.
-	vis_util.visualize_boxes_and_labels_on_image_array(
-		image_np,
-		output_dict['detection_boxes'],
-		output_dict['detection_classes'],
-		output_dict['detection_scores'],
-		category_index,
-		instance_masks=output_dict.get('detection_masks'),
-		use_normalized_coordinates=True,
-		line_thickness=8)
+	# Visualization of the results of a detection. - Uncomment to show the SSD visualization.
+	# vis_util.visualize_boxes_and_labels_on_image_array(
+	# 	image_np,
+	# 	output_dict['detection_boxes'],
+	# 	output_dict['detection_classes'],
+	# 	output_dict['detection_scores'],
+	# 	category_index,
+	# 	instance_masks=output_dict.get('detection_masks'),
+	# 	use_normalized_coordinates=True,
+	# 	line_thickness=8)
     
-	plt.figure(figsize=IMAGE_SIZE)
-	plt.imshow(image_np)
+	# plt.figure(figsize=IMAGE_SIZE)
+	# plt.imshow(image_np)
 
 	return obj_detections_dict
 
