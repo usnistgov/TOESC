@@ -88,3 +88,93 @@ def forecast_inferrence(extracted_seq_num_detection_data, forecasting_model_name
     #print(test_one_prediction_result[0], test_one_prediction_result[0].shape)
     
     return test_one_prediction_result
+
+def n_windowed_forecast_inferrence(forecast_window, extracted_seq_num_detection_data, forecasting_model_name):
+    """ Given: 
+            - Forecast window (number of future frames to predict)
+            - A seq_num of images detection data
+            - Trained forecasting model
+        Return:
+            - n_future frames prediction data
+    """
+    
+    forecast_detection_result = []
+    model = tf.keras.models.load_model(forecasting_model_name)
+    
+    for i in range(forecast_window):
+    
+        detection_np_array = np.array(extracted_seq_num_detection_data)
+        test_one_detection_np_array = np.array([detection_np_array,])
+        test_one_prediction_result = model.predict(test_one_detection_np_array)
+        
+        #print("\n:: Prediction at: ", i, " iteration: \n\t", test_one_prediction_result)
+
+        forecast_detection_result.append(test_one_prediction_result)
+        
+        extracted_seq_num_detection_data = np.append(extracted_seq_num_detection_data, test_one_prediction_result)
+        extracted_seq_num_detection_data = np.reshape(extracted_seq_num_detection_data, (51, 30))
+        
+        extracted_seq_num_detection_data = extracted_seq_num_detection_data[1:]
+        
+    print("\n", forecast_window, "- Forecast session is done.\n")
+    
+    return forecast_detection_result
+
+def forecast_report_on_occlusions_predictions(forecast_results):
+    """ Given the output of our forecasting model, explore it with a focus on occlusion events forecast """
+    
+    num_occlusions_bool = False
+    num_occlusions = 0
+    object_type_events = []
+    res_len = len(forecast_results)
+    
+    if res_len == 1: 
+        for i in range(0, len(forecast_results[0]), 6):
+            if (sum(forecast_results[0][i:i+6]) > 0) and (i % 6 == 0):
+                object_type_events.append(forecast_results[0][i])
+    else:
+        for i_forecast in forecast_results:
+            tmp_obj_types = []
+            
+            for i in range(0, len(i_forecast[0]), 6):
+                if (sum(i_forecast[0][i:i+6]) > 0) and (i % 6 == 0):
+                    tmp_obj_types.append(i_forecast[0][i])
+                    
+            object_type_events.append(tmp_obj_types)
+    
+    print("\n:: Detected Object Types: \t\n", object_type_events, "\n")
+    
+    forecast_booleanist = [] # Array of yes/no forecast for the occlusion event occurrences.
+    res_forecast = 0
+    
+    try:
+        partial = len(object_type_events[0])
+        res_forecast = len(object_type_events)
+    except:
+        res_forecast = 1
+    
+    if res_forecast == 1:
+        for event in object_type_events:
+            if (event < 1) and (event > -1): # An approximate range for the oclusion event detections. Needs calibration.
+                num_occlusions += 1
+    
+        if num_occlusions > 0:
+            forecast_booleanist.append("YES")
+        else:
+            forecast_booleanist.append("NO")
+            
+    else:
+        for i_events in object_type_events:
+            num_occ = 0
+            
+            for event in i_events:
+                if (event < 1) and (event > -1): # An approximate range for the oclusion event detections. Needs calibration.
+                    num_occ += 1
+            
+            if num_occ > 0:
+                forecast_booleanist.append("YES")
+            else:
+                forecast_booleanist.append("NO")
+        
+    return forecast_booleanist
+ 
