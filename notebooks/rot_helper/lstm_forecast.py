@@ -2,6 +2,8 @@
 import numpy as np
 import tensorflow as tf
 
+DEBUG=False
+
 def local_padding_series(ssd_detection_data, max_bboxes_vec_size):
     """ Given an ssd_detection_data, return its padded version """
     
@@ -120,61 +122,91 @@ def n_windowed_forecast_inferrence(forecast_window, extracted_seq_num_detection_
     
     return forecast_detection_result
 
-def forecast_report_on_occlusions_predictions(forecast_results):
+def forecast_report_on_occlusions_predictions_area(forecast_results):
     """ Given the output of our forecasting model, explore it with a focus on occlusion events forecast """
     
-    num_occlusions_bool = False
-    num_occlusions = 0
-    object_type_events = []
-    res_len = len(forecast_results)
-    
-    if res_len == 1: 
-        for i in range(0, len(forecast_results[0]), 6):
-            if (sum(forecast_results[0][i:i+6]) > 0) and (i % 6 == 0):
-                object_type_events.append(forecast_results[0][i])
-    else:
-        for i_forecast in forecast_results:
-            tmp_obj_types = []
-            
-            for i in range(0, len(i_forecast[0]), 6):
-                if (sum(i_forecast[0][i:i+6]) > 0) and (i % 6 == 0):
-                    tmp_obj_types.append(i_forecast[0][i])
-                    
-            object_type_events.append(tmp_obj_types)
-    
-    print("\n:: Detected Object Types: \t\n", object_type_events, "\n")
-    
-    forecast_booleanist = [] # Array of yes/no forecast for the occlusion event occurrences.
-    res_forecast = 0
-    
-    try:
-        partial = len(object_type_events[0])
-        res_forecast = len(object_type_events)
-    except:
-        res_forecast = 1
-    
-    if res_forecast == 1:
-        for event in object_type_events:
-            if (event < 1) and (event > -1): # An approximate range for the oclusion event detections. Needs calibration.
-                num_occlusions += 1
-    
-        if num_occlusions > 0:
-            forecast_booleanist.append("YES")
-        else:
-            forecast_booleanist.append("NO")
-            
-    else:
-        for i_events in object_type_events:
-            num_occ = 0
-            
-            for event in i_events:
-                if (event < 1) and (event > -1): # An approximate range for the oclusion event detections. Needs calibration.
-                    num_occ += 1
-            
-            if num_occ > 0:
-                forecast_booleanist.append("YES")
-            else:
-                forecast_booleanist.append("NO")
+    forecast_booleanist_final = [] # Array of yes/no forecast for the occlusion event occurrences.
+
+    if DEBUG:
+        print("\n\n:: Single Forecast Report Start:")
+
+    for forecast_data in forecast_results:
+        ### Extract the first 30 predicted data points, which represent one image's object detection data
+
+        forecast_booleanist = [] # 1 or 0
+        objects_detection_list = []
+
+        if len(forecast_data) == 30:
+            for i in range(0, 30, 6):
+                objects_detection_list.append(forecast_data[i:(i+6)])
+
+        #print("\n\n:: objects_detection_list: ", objects_detection_list, "\n\n")
+
+        ### Process objects_detection_list to determine if the object type is within the range of occlusion type density and 
+        ###     the bounding box area of the predicted occlusion area to be a potential forecast.
         
-    return forecast_booleanist
+        for object_data in objects_detection_list:
+
+            object_data_list = list(object_data)
+            object_type = float(object_data_list[0])
+
+            #print("\nobject_data_list: ", object_data_list)
+            #print("\nobject_type: ", object_type)
+
+            if object_type <= 0.3 and object_type >= -0.3: # Occlusion object type values range with a mean of 0.              
+
+                ymin =  float(object_data_list[2])
+                xmin =  float(object_data_list[3])
+                ymax =  float(object_data_list[4])
+                xmax =  float(object_data_list[5])
+
+                w = (xmax - xmin) # Scaled
+                h = (ymax - ymin) # Scaled
+
+                area = w * h
+
+                #print("\nScaled area: ", area)
+
+                if area <= 0.0150 and area >= 0.005: # Occlusion bounding box area range. +- (0.005)* over the range (0 - 0.025)
+                    forecast_booleanist.append(1)
+                else:
+                    forecast_booleanist.append(0)
+        if DEBUG:
+            print("\nforecast_booleanist: ", forecast_booleanist) # Per object detection data
+
+        if sum(forecast_booleanist) >= 1:
+            forecast_booleanist_final.append("Yes")
+        else:
+            forecast_booleanist_final.append("No")
+
+    if DEBUG:
+        print("\n\n:: Forecast Report End.")
+
+    return forecast_booleanist_final
+
+
+def longterm_forecast_report_on_occlusions_predictions_area(forecast_results):
+    """ Given the output of our forecasting model, explore it with a focus on occlusion events forecast """
+    
+    forecast_booleanist_final = [] # Array of yes/no forecast for the occlusion event occurrences.
+
+    if DEBUG:
+        print("\n\n:: Initial Long Term Forecast Report Start:")
+
+    for forecast_data in forecast_results:
+        ### Extract the first 30 predicted data points, which represent one image's object detection data
+        if DEBUG:
+            print ("\n\nN-Forecast-Data: ", forecast_data)
+
+        forecast_booleanist = [] # 1 or 0 
+        objects_detection_list = []
+        
+        forecast_booleanist_final.append(forecast_report_on_occlusions_predictions_area(forecast_data))
+        if DEBUG:
+            input("Checkmate???")
+
+    if DEBUG:
+        print("\n\n:: Long Term Forecast Report End.")
+
+    return list((np.array(forecast_booleanist_final)).flatten())
  
